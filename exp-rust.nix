@@ -10,6 +10,7 @@ pkgs.mkShell {
         pkgs.llvmPackages_rocm.llvm
         pkgs.rustup
         pkgs.rust-script
+        pkgs.cargo-watch
     ];
 
     shellHook = ''
