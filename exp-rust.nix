@@ -15,8 +15,6 @@ pkgs.mkShell {
         pkgs.clippy
     ];
 
-    RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-
     shellHook = ''
         echo "rust experimentation environment"
     '';
