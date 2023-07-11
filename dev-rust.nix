@@ -16,6 +16,8 @@ pkgs.mkShell {
         pkgs.llvmPackages_rocm.bintools
         pkgs.llvmPackages_rocm.clang
         pkgs.libclang
+        # Optional:
+        # pkgs.openssl # some web related things (e.g. reqwest) need openssl
     ];
 
     RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
