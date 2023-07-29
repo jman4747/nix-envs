@@ -1,27 +1,44 @@
-# this file won't be in the git repo normally
+{ nixpkgs ? import <nixpkgs> {}}:
 
-{ pkgs ? import <nixpkgs> {}
-}:
+let
+# using the rust overlay to manage rust versions
+rustOverlay = builtins.fetchTarball "https://github.com/oxalica/rust-overlay/archive/master.tar.gz";
+
+# This gets a specific version of nixpkgs and uses it for later pkgs
+# and for the rustOverlay to use to build rust against.
+pinnedPkgs = builtins.fetchTarball {
+    name  = "nixpkgs-stable-23.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/refs/tags/23.05.tar.gz";
+    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
+};
+
+pkgs = import pinnedPkgs {
+    overlays = [ (import rustOverlay) ];
+};
+
+in
 
 pkgs.mkShell {
     name="dev-environment";
-    nativeBuildInputs = [
-        pkgs.lld_16
-        pkgs.cargo
-        pkgs.rustc
-        pkgs.cargo-watch
-        pkgs.cargo-tarpaulin
-        pkgs.cargo-audit
-        pkgs.clippy
-        pkgs.llvmPackages_rocm.bintools
-        pkgs.llvmPackages_rocm.clang
-        pkgs.libclang
-        # Optional:
-        # pkgs.openssl # some web related things (e.g. reqwest) need openssl
+    nativeBuildInputs = with pkgs; [
+        (rust-bin.stable.latest.default.override {
+            # rust-src and rust-analysis included for the benafit of
+            # rust-analyzer integration with editors
+            extensions = [ "rust-src" "rust-analysis"];
+        })
+        rust-analyzer
+
+        # lld is used for faster linking
+        # for this to work, a .cargo/config.toml has to set:
+        # build.rustflags or target.<triple> = ["-C", "link-arg=-fuse-ld=lld"]
+        lld_16
+        cargo-watch
+        cargo-tarpaulin
+        cargo-audit
+        openssl
     ];
 
-    RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-    LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
+    RUST_BACKTRACE = 1;
 
     shellHook = ''
         echo "default rust dev environment"
